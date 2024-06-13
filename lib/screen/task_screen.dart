@@ -310,7 +310,7 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                           ThemeData newTheme = ThemeData(
                             primarySwatch: Colors.blue,
                             textTheme: TextTheme(
-                              bodyText1: StyleConfig.backgroundTextStyles[newImage] ?? TextStyle(color: Colors.white),
+                              // bodyText1: StyleConfig.backgroundTextStyles[newImage] ?? TextStyle(color: Colors.white),
                             ),
                           );
                           // themeNotifier.setTheme(newTheme, newImage);
