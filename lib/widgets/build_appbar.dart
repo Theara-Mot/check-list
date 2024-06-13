@@ -22,7 +22,7 @@ class BuildAppBar extends StatelessWidget {
       backgroundColor: AppColors.body,
       appBar: AppBar(
         centerTitle: false,
-        backgroundColor: Color(0xff0066b2),
+        backgroundColor:Colors.transparent,
         leading: isShowback
             ? GestureDetector(
           onTap: () {
