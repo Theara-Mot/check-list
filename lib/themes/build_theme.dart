@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class StyleConfig {
   static final Map<String, TextStyle> backgroundTextStyles = {
     'assets/background_images/background1.jpg': TextStyle(
-      color: Colors.white,
+      color: Colors.black,
       fontSize: 16,
       fontWeight: FontWeight.bold,
     ),
