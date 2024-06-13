@@ -1,4 +1,4 @@
-import 'package:checklist/providers/provider.dart';
+import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/screen/home_screen.dart';
 import 'package:checklist/testing.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +19,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context,ScopedReader watch) {
     final themeNotifier = watch(themeNotifierProvider);
     return MaterialApp(
-      title: 'Checklist App',
+      title: 'Check List',
       debugShowCheckedModeBanner: false,
       theme: themeNotifier.themeData,
       home: Testing(),

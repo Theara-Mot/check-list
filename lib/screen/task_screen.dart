@@ -1,5 +1,5 @@
 import 'package:checklist/models/task.dart';
-import 'package:checklist/providers/provider.dart';
+import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/themes/build_theme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -179,13 +179,9 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                 .toList(),
             onChanged: (String? newImage) {
               if (newImage != null) {
-                ThemeData newTheme = ThemeData(
-                  primarySwatch: Colors.blue,
-                  textTheme: TextTheme(
-                    bodyText1: StyleConfig.backgroundTextStyles[newImage] ?? TextStyle(color: Colors.black),
-                  ),
-                );
-                themeNotifier.setTheme(newTheme, newImage);
+            
+                // themeNotifier.setTheme(newTheme, newImage);
+                themeNotifier.setTheme(1);
               }
             },
           ),
@@ -317,7 +313,8 @@ class _TaskCreationScreenState extends State<TaskCreationScreen> {
                               bodyText1: StyleConfig.backgroundTextStyles[newImage] ?? TextStyle(color: Colors.white),
                             ),
                           );
-                          themeNotifier.setTheme(newTheme, newImage);
+                          // themeNotifier.setTheme(newTheme, newImage);
+                          themeNotifier.setTheme(1);
                         }
                       },
                     ),

@@ -1,8 +1,10 @@
 
+import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/screen/home_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'custom_listtile.dart';
 import 'header.dart';
@@ -20,20 +22,24 @@ class _CustomDrawerLeaveState extends State<CustomDrawerLeave> {
 
   @override
   Widget build(BuildContext context) {
+    var themeNotifier = context.read(themeNotifierProvider);
+    TextStyle textStyle = themeNotifier.themeData.textTheme.bodyText1!;
+    Color iconColor = themeNotifier.iconColor;
+    Color drawerColor = themeNotifier.drawerColor;
     return SafeArea(
       child: AnimatedContainer(
         curve: Curves.easeInOutCubic,
         duration: const Duration(milliseconds: 500),
         width: _isCollapsed ? 300 : 70,
         margin: const EdgeInsets.only(bottom: 10, top: 10,left: 10,right: 10),
-        decoration:const BoxDecoration(
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(3),
             bottomRight: Radius.circular(12),
             bottomLeft: Radius.circular(3),
           ),
-          color:Color.fromRGBO(152, 167, 125, 0.85),
+          color:drawerColor
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
