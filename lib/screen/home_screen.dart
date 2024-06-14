@@ -1,16 +1,14 @@
 import 'dart:convert';
-
 import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/screen/add_task.dart';
 import 'package:checklist/screen/drawer/custom_drawer.dart';
-import 'package:checklist/screen/task_screen.dart';
 import 'package:checklist/themes/build_theme.dart';
 import 'package:checklist/widgets/build_background.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 import '../models/task.dart';
 
@@ -23,16 +21,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   TextEditingController searchController = TextEditingController();
-  List<bool> isCollapsed = []; // Initial state for collapse/expand
-  List<Task> _taskList = []; // List to store loaded tasks
+  List<Task> _taskList = [];
+  List<bool> isCollapsed = [];
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-
-    });
-    isCollapsed = List.generate(_taskList.length, (_) => true);
     _loadTasks();
   }
 
@@ -41,13 +35,12 @@ class _HomeScreenState extends State<HomeScreen> {
     String? taskListJson = prefs.getString('tasks');
     if (taskListJson != null) {
       List<dynamic> decoded = jsonDecode(taskListJson);
-      List<Task> tasks = decoded.map((taskJson) => Task.fromJson(taskJson)).toList();
       setState(() {
-        _taskList = tasks;
+        _taskList = decoded.map((taskJson) => Task.fromJson(taskJson)).toList();
+        isCollapsed = List.generate(_taskList.length, (_) => true); // Initialize collapse state
       });
     }
   }
-
 
   void _showBottomModal(BuildContext context) {
     showModalBottomSheet(
@@ -122,8 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Color iconColor = themeNotifier.iconColor;
     Color buttonColor = themeNotifier.buttonColor;
     Color containerColor = themeNotifier.themeData.cardTheme.color ?? Colors.white;
-    print(_taskList.length);
-    isCollapsed = List.generate(_taskList.length, (_) => true);
+
     return AppBackground(
       backgroundImage: themeNotifier.backgroundImage,
       child: Scaffold(
@@ -155,9 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => AddTask()),
-            ).then((_) {
-              _loadTasks(); // Reload tasks when returning from AddTask screen
-            });
+            );
           },
           child: Icon(Icons.add),
         ),
@@ -173,13 +163,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                   child: TextFormField(
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.text,
                     controller: searchController,
                     decoration: InputDecoration(
                       hintText: 'Search here  . . . ',
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        // Implement search functionality here if needed
+                      });
+                    },
                   ),
                 ),
               ),
@@ -202,26 +197,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Checkbox(
                                 activeColor: buttonColor,
-                                value: task.isCompleted,
+                                value: task.isAlarm,
                                 onChanged: (newValue) {
                                   setState(() {
-                                    task.isCompleted = newValue!;
+                                    task.isAlarm = newValue ?? false;
+                                    // Save updated task state
                                   });
-                                  // TODO: Update task completion status in storage
                                 },
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(task.title, style: bodyMedium),
-                                  Text(
-                                    DateFormat('yyyy-MM-dd HH:mm').format(task.dueDate ?? DateTime.now()),
-                                    style: bodySmall,
-                                  ),
+                                  if (task.dueDate != null)
+                                    Text(
+                                      DateFormat('dd-MM-yyyy HH:mm a').format(task.dueDate!),
+                                      style: bodySmall,
+                                    ),
                                 ],
                               ),
                               Spacer(),
-                              Text('0/4', style: body),
+                              Text('${task.subtasks.where((subtask) => subtask.status).length}/${task.subtasks.length}', style: body),
                               SizedBox(width: 8),
                               CircleAvatar(
                                 backgroundColor: Colors.grey.withOpacity(0.1),
@@ -245,18 +241,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: EdgeInsets.only(left: 30),
                               physics: NeverScrollableScrollPhysics(),
                               shrinkWrap: true,
-                              itemCount: 5,
-                              itemBuilder: (context, index) {
+                              itemCount: task.subtasks.length,
+                              itemBuilder: (context, subIndex) {
+                                SubTask subtask = task.subtasks[subIndex];
                                 return Row(
                                   children: [
                                     Checkbox(
                                       activeColor: buttonColor,
-                                      value: false,
+                                      value: subtask.status,
                                       onChanged: (newValue) {
-                                        // Handle checkbox state change
+                                        setState(() {
+                                          subtask.status = newValue ?? false;
+                                          // Save updated subtask state
+                                        });
                                       },
                                     ),
-                                    Text('data ${index + 1}')
+                                    Text(subtask.title)
                                   ],
                                 );
                               },
@@ -278,4 +278,65 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class Task {
+  String title;
+  DateTime? dueDate;
+  bool isAlarm;
+  int priority;
+  List<SubTask> subtasks;
 
+  Task({
+    required this.title,
+    this.dueDate,
+    this.isAlarm = false,
+    this.priority = -1,
+    this.subtasks = const [],
+  });
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      title: json['title'],
+      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate']) : null,
+      isAlarm: json['isAlarm'] ?? false,
+      priority: json['priority'] ?? -1,
+      subtasks: (json['subtasks'] as List<dynamic>?)
+              ?.map((subtaskJson) => SubTask.fromJson(subtaskJson))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'dueDate': dueDate?.toIso8601String(),
+      'isAlarm': isAlarm,
+      'priority': priority,
+      'subtasks': subtasks.map((subtask) => subtask.toJson()).toList(),
+    };
+  }
+}
+
+class SubTask {
+  String title;
+  bool status;
+
+  SubTask({
+    required this.title,
+    this.status = false,
+  });
+
+  factory SubTask.fromJson(Map<String, dynamic> json) {
+    return SubTask(
+      title: json['title'],
+      status: json['status'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'status': status,
+    };
+  }
+}

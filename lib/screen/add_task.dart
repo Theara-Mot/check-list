@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -28,8 +27,10 @@ class _AddTaskState extends State<AddTask> {
   bool _isListening = false;
   bool _isPermissionGranted = false;
   final List<Task> _taskList = [];
+  final List<SubTask> _subtasks = [];
   int _selectedPriorityIndex = -1;
   bool isAlarm = false;
+
   Future<void> _requestPermission() async {
     bool permission = await _speech.initialize(
       onError: (e) => print('Error: $e'),
@@ -124,7 +125,6 @@ class _AddTaskState extends State<AddTask> {
     _loadTasks(); // Load tasks on initialization
   }
 
-
   Future<void> _loadTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? taskListJson = prefs.getString('tasks');
@@ -144,10 +144,21 @@ class _AddTaskState extends State<AddTask> {
   }
 
   Future<void> _addTask() async {
-    if (_taskController.text.isNotEmpty) {
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        _taskList.add(Task(title: _taskController.text, dueDate: null));
+        _taskList.add(Task(
+          title: _titleController.text,
+          dueDate: DateFormat('dd-MM-yyyy HH:mm a').format(_selectedDate),
+          isAlarm: isAlarm,
+          priority: _selectedPriorityIndex,
+          subtasks: _subtasks,
+        ));
+        _titleController.clear();
         _taskController.clear();
+        _selectedPriorityIndex = -1;
+        isAlarm = false;
+        _selectedDate = DateTime.now();
+        _subtasks.clear();
       });
       await _saveTasks(); // Save tasks after adding a new task
     }
@@ -236,7 +247,7 @@ class _AddTaskState extends State<AddTask> {
                         value: isAlarm,
                         onChanged: (bool? value) {
                           setState(() {
-                            isAlarm = !isAlarm;
+                            isAlarm = value!;
                           });
                         },
                       ),
@@ -266,7 +277,7 @@ class _AddTaskState extends State<AddTask> {
                             child: TextFormField(
                               controller: _titleController,
                               decoration: InputDecoration(
-                                hintText: 'Enter task here',
+                                hintText: 'Enter task title here',
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                               ),
@@ -276,7 +287,7 @@ class _AddTaskState extends State<AddTask> {
                       ),
                       SizedBox(width: 5),
                       GestureDetector(
-                        onTap: null,
+                        onTap: _listen,
                         child: Icon(
                           Icons.keyboard_voice_sharp,
                           size: 30,
@@ -286,7 +297,7 @@ class _AddTaskState extends State<AddTask> {
                     ],
                   ),
                   SizedBox(height: 20),
-                  Text('Task', style: bodyMedium),
+                  Text('Subtasks', style: bodyMedium),
                   Card(
                     elevation: 0,
                     color: themeNotifier.containerColor,
@@ -302,7 +313,7 @@ class _AddTaskState extends State<AddTask> {
                               keyboardType: TextInputType.multiline,
                               controller: _taskController,
                               decoration: InputDecoration(
-                                hintText: 'Enter task here',
+                                hintText: 'Enter subtask here',
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                               ),
@@ -313,9 +324,12 @@ class _AddTaskState extends State<AddTask> {
                             onPressed: () {
                               if (_taskController.text.isEmpty) {
                                 FocusScope.of(context).unfocus();
-                                ToastWidget.show(context, 'Please input task');
+                                ToastWidget.show(context, 'Please input a subtask');
                               } else {
-                                _addTask();
+                                setState(() {
+                                  _subtasks.add(SubTask(title: _taskController.text, status: false));
+                                  _taskController.clear();
+                                });
                               }
                             },
                           ),
@@ -323,78 +337,38 @@ class _AddTaskState extends State<AddTask> {
                       ),
                     ),
                   ),
-                  if (_taskList.length > 1) SizedBox(height: 5),
-                  if (_taskList.length > 1)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Hold to reorder',
-                          style: bodySmall,
-                        ),
-                        Text(
-                          'Swipe right to remove item',
-                          style: bodySmall,
-                        ),
-                      ],
-                    ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                    child: ReorderableListView(
-                      physics: NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      onReorder: (int oldIndex, int newIndex) {
-                        setState(() {
-                          if (newIndex > oldIndex) {
-                            newIndex -= 1;
-                          }
-                          final item = _taskList.removeAt(oldIndex);
-                          _taskList.insert(newIndex, item);
-                        });
-                        _saveTasks(); // Save tasks after reordering
-                      },
-                      children: [
-                        for (int index = 0; index < _taskList.length; index++)
-                          Dismissible(
-                            key: Key(_taskList[index].title),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (direction) {
-                              _removeTask(index);
-                            },
-                            background: Container(
-                              color: Colors.redAccent,
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
-                                  child: Icon(Icons.delete, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                            child: ListTile(
+                  if (_subtasks.isNotEmpty) SizedBox(height: 5),
+                  if (_subtasks.isNotEmpty)
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                      child: ReorderableListView(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        onReorder: (int oldIndex, int newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) {
+                              newIndex -= 1;
+                            }
+                            final item = _subtasks.removeAt(oldIndex);
+                            _subtasks.insert(newIndex, item);
+                          });
+                        },
+                        children: [
+                          for (int index = 0; index < _subtasks.length; index++)
+                            ListTile(
+                              key: Key(_subtasks[index].title),
                               title: Text(
-                                _taskList[index].title,
-                                style: bodyMedium.copyWith(
-                                  decoration: _taskList[index].isCompleted
-                                      ? TextDecoration.lineThrough
-                                      : null,
-                                ),
+                                _subtasks[index].title,
+                                style: bodyMedium,
                               ),
-                              leading: Checkbox(
-                                value: false,
-                                onChanged: (bool? value) {
-                                  // No action on Checkbox change
-                                },
-                              ),
+                              trailing: Icon(Icons.drag_handle, color: iconColor),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   SizedBox(height: 40),
                   Container(
                     width: double.infinity,
@@ -405,7 +379,7 @@ class _AddTaskState extends State<AddTask> {
                     child: InkWell(
                       splashColor: Colors.blueAccent,
                       borderRadius: BorderRadius.circular(30),
-                      onTap: _saveTasks,
+                      onTap: _addTask,
                       child: Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Center(
@@ -452,5 +426,68 @@ class _AddTaskState extends State<AddTask> {
         ),
       ],
     );
+  }
+}
+
+class Task {
+  String title;
+  String? dueDate;
+  bool isAlarm;
+  int priority;
+  List<SubTask> subtasks;
+
+  Task({
+    required this.title,
+    this.dueDate,
+    this.isAlarm = false,
+    this.priority = -1,
+    this.subtasks = const [],
+  });
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      title: json['title'],
+      dueDate: json['dueDate'].toString() ??'',
+      isAlarm: json['isAlarm'] ?? false,
+      priority: json['priority'] ?? -1,
+      subtasks: (json['subtasks'] as List<dynamic>?)
+              ?.map((subtaskJson) => SubTask.fromJson(subtaskJson))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'dueDate': dueDate,
+      'isAlarm': isAlarm,
+      'priority': priority,
+      'subtasks': subtasks.map((subtask) => subtask.toJson()).toList(),
+    };
+  }
+}
+
+class SubTask {
+  String title;
+  bool status;
+
+  SubTask({
+    required this.title,
+    this.status = false,
+  });
+
+  factory SubTask.fromJson(Map<String, dynamic> json) {
+    return SubTask(
+      title: json['title'],
+      status: json['status'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'status': status,
+    };
   }
 }
