@@ -7,8 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'cost/color.dart';
-
 class Testing extends StatefulWidget {
   const Testing({super.key});
 
@@ -160,11 +158,6 @@ class _TestingState extends State<Testing> {
                       padding: EdgeInsets.all(8.0),
                       margin: EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
-                        image: DecorationImage(
-                          fit: BoxFit.cover,
-                          scale: 4,
-                          image: AssetImage(themeNotifier.backgroundImage)
-                        ),
                         borderRadius: BorderRadius.circular(10),
                         color: containerColor,
                       ),

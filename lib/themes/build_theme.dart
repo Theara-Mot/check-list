@@ -11,7 +11,7 @@ class AppTheme {
       'small-text' :TextStyle(color:Colors.grey,fontSize: 12),
       'icon-color':Color.fromARGB(255, 54, 87, 3),
       'drawer-color':Color.fromARGB(200, 152, 167, 125),
-      'button-color':Color.fromARGB(255, 54, 87, 3),
+      'button-color':Color.fromARGB(206, 53, 87, 3),
       'name':'style 1',
       'container-color':Color.fromARGB(145, 221, 241, 188)
     },

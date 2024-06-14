@@ -1,9 +1,6 @@
 import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/screen/home_screen.dart';
-import 'package:checklist/testing.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 void main() {
@@ -22,7 +19,7 @@ class MyApp extends ConsumerWidget {
       title: 'Check List',
       debugShowCheckedModeBanner: false,
       theme: themeNotifier.themeData,
-      home: Testing(),
+      home: const HomeScreen(),
     );
   }
 }

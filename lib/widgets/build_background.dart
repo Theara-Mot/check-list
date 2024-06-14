@@ -13,7 +13,7 @@ class AppBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         ImageFiltered(
-          imageFilter: ui.ImageFilter.blur(sigmaX: 1, sigmaY: 2.5),
+          imageFilter: ui.ImageFilter.blur(sigmaX: 2, sigmaY: 2.5),
           child: Image.asset(
             backgroundImage,
             fit: BoxFit.cover,
