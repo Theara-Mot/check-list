@@ -1,39 +1,65 @@
+import 'dart:convert';
+
 class Task {
-  final String id;
-  final String title;
-  final String description;
-  final int priority;
-  final bool isCompleted;
-  final DateTime created_at;
+  String title;
+  bool isCompleted;
+  DateTime? dueDate;
+  bool isAlarm;
+  int? priority;
+  List<SubTask> subTasks;
 
   Task({
-    required this.id,
     required this.title,
-    required this.description,
-    required this.priority,
-    required this.isCompleted,
-    required this.created_at,
-  });
-
-  factory Task.fromJson(Map<String, dynamic> json) {
-    return Task(
-      id: json['id'].toString(),
-      title: json['title'] as String,
-      description: json['description'] as String,
-      priority: json['priority'] as int,
-      isCompleted: json['isCompleted'] as bool,
-      created_at: DateTime.parse(json['created_at'] as String),
-    );
-  }
+    this.isCompleted = false,
+    this.dueDate,
+    this.isAlarm = false,
+    this.priority,
+    List<SubTask>? subTasks,
+  }) : this.subTasks = subTasks ?? [];
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'title': title,
-      'description': description,
-      'priority': priority,
       'isCompleted': isCompleted,
-      'created_at': created_at.toIso8601String(),
+      'dueDate': dueDate?.millisecondsSinceEpoch,
+      'isAlarm': isAlarm,
+      'priority': priority,
+      'subTasks': subTasks.map((subTask) => subTask.toJson()).toList(),
     };
+  }
+
+  factory Task.fromJson(Map<String, dynamic> json) {
+    return Task(
+      title: json['title'],
+      isCompleted: json['isCompleted'],
+      dueDate: json['dueDate'] != null ? DateTime.fromMillisecondsSinceEpoch(json['dueDate']) : null,
+      isAlarm: json['isAlarm'],
+      priority: json['priority'],
+      subTasks: (json['subTasks'] as List<dynamic>).map((subTaskJson) => SubTask.fromJson(subTaskJson)).toList(),
+    );
+  }
+}
+
+class SubTask {
+  String title;
+  bool isCompleted;
+
+  SubTask({
+    required this.title,
+    this.isCompleted = false,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory SubTask.fromJson(Map<String, dynamic> json) {
+    return SubTask(
+      title: json['title'],
+      isCompleted: json['isCompleted'],
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:checklist/providers/theme_notifier.dart';
+import 'package:checklist/screen/add_task.dart';
 import 'package:checklist/screen/drawer/custom_drawer.dart';
 import 'package:checklist/screen/task_screen.dart';
 import 'package:checklist/themes/build_theme.dart';
@@ -122,7 +123,7 @@ class _TestingState extends State<Testing> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TaskCreationScreen()),
+              MaterialPageRoute(builder: (context) => AddTask()),
             );
           },
           child: Icon(Icons.add),

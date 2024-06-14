@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:checklist/providers/theme_notifier.dart';
 import 'package:checklist/screen/add_task.dart';
 import 'package:checklist/screen/drawer/custom_drawer.dart';
@@ -7,6 +9,10 @@ import 'package:checklist/widgets/build_background.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/task.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +23,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   TextEditingController searchController = TextEditingController();
-  List<bool> isCollapsed = List.generate(2, (_) => true); // Initial state for collapse/expand
+  List<bool> isCollapsed = []; // Initial state for collapse/expand
+  List<Task> _taskList = []; // List to store loaded tasks
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+
+    });
+    isCollapsed = List.generate(_taskList.length, (_) => true);
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? taskListJson = prefs.getString('tasks');
+    if (taskListJson != null) {
+      List<dynamic> decoded = jsonDecode(taskListJson);
+      List<Task> tasks = decoded.map((taskJson) => Task.fromJson(taskJson)).toList();
+      setState(() {
+        _taskList = tasks;
+      });
+    }
+  }
+
 
   void _showBottomModal(BuildContext context) {
     showModalBottomSheet(
@@ -92,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Color iconColor = themeNotifier.iconColor;
     Color buttonColor = themeNotifier.buttonColor;
     Color containerColor = themeNotifier.themeData.cardTheme.color ?? Colors.white;
-
+    print(_taskList.length);
+    isCollapsed = List.generate(_taskList.length, (_) => true);
     return AppBackground(
       backgroundImage: themeNotifier.backgroundImage,
       child: Scaffold(
@@ -124,7 +155,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => AddTask()),
-            );
+            ).then((_) {
+              _loadTasks(); // Reload tasks when returning from AddTask screen
+            });
           },
           child: Icon(Icons.add),
         ),
@@ -153,8 +186,9 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 20),
               Expanded(
                 child: ListView.builder(
-                  itemCount: 2,
+                  itemCount: _taskList.length,
                   itemBuilder: (context, index) {
+                    Task task = _taskList[index];
                     return Container(
                       padding: EdgeInsets.all(8.0),
                       margin: EdgeInsets.only(bottom: 10),
@@ -168,16 +202,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Checkbox(
                                 activeColor: buttonColor,
-                                value: false,
+                                value: task.isCompleted,
                                 onChanged: (newValue) {
-                                  // Handle checkbox state change
+                                  setState(() {
+                                    task.isCompleted = newValue!;
+                                  });
+                                  // TODO: Update task completion status in storage
                                 },
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Welcome to Task!', style: bodyMedium),
-                                  Text('Today 11.27 PM', style: bodySmall),
+                                  Text(task.title, style: bodyMedium),
+                                  Text(
+                                    DateFormat('yyyy-MM-dd HH:mm').format(task.dueDate ?? DateTime.now()),
+                                    style: bodySmall,
+                                  ),
                                 ],
                               ),
                               Spacer(),
@@ -237,3 +277,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
